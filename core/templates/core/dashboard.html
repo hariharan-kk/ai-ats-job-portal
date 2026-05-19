@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard | AI Job Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'job_list' %}">AI Job Portal</a>
+        <div class="d-flex align-items-center">
+            <span class="navbar-text text-light me-3">
+                Hello, <strong>{{ user.username }}</strong>
+            </span>
+            <a href="{% url 'job_list' %}" class="btn btn-outline-info btn-sm me-2">Find Jobs</a>
+            <form action="{% url 'logout' %}" method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">Logout</button>
+            </form>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold text-primary">My Applications</h2>
+            <p class="text-muted">Track your application status and AI evaluation scores below.</p>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">Job Title</th>
+                            <th class="px-4 py-3">Date Applied</th>
+                            <th class="px-4 py-3 text-center">AI Match Score</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in applications %}
+                        <tr>
+                            <td class="px-4 py-3 fw-semibold align-middle">{{ app.job.title }}</td>
+                            <td class="px-4 py-3 text-muted align-middle">{{ app.applied_at|date:"M d, Y" }}</td>
+                            
+                            <td class="px-4 py-3 text-center align-middle">
+                                {% if app.ai_match_score is not None %}
+                                    <span class="badge bg-secondary rounded-pill fs-6">{{ app.ai_match_score }}%</span>
+                                {% else %}
+                                    <span class="text-muted small">Pending AI</span>
+                                {% endif %}
+                            </td>
+                            
+                            <td class="px-4 py-3 text-center align-middle">
+                                {% if app.status == 'Shortlisted' %}
+                                    <span class="badge bg-success">Shortlisted</span>
+                                {% elif app.status == 'Rejected' %}
+                                    <span class="badge bg-danger">Not Selected</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Under Review</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                You haven't applied to any jobs yet. <br>
+                                <a href="{% url 'job_list' %}" class="btn btn-primary mt-3">Browse Active Jobs</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

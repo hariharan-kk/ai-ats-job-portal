@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Login | AI Job Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; }
+        .auth-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        .auth-card { border: none; border-radius: 1rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); overflow: hidden; max-width: 900px; width: 100%; background: white; }
+        .auth-brand { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; padding: 3rem; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .auth-form-container { padding: 4rem 3rem; }
+        
+        /* Custom Styling for Django's default form fields */
+        p { margin-bottom: 1rem; }
+        label { font-weight: 600; margin-bottom: 0.4rem; color: #495057; font-size: 0.9rem;}
+        input[type="text"], input[type="password"], input[type="email"] { 
+            width: 100%; 
+            border: 1px solid #ced4da; 
+            border-radius: 0.5rem; 
+            padding: 0.75rem 1rem; 
+            transition: all 0.2s; 
+            background-color: #f8f9fa;
+        }
+        input:focus { border-color: #86b7fe; outline: 0; box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25); background-color: #fff;}
+        ul.errorlist { color: #dc3545; list-style: none; padding-left: 0; font-size: 0.85rem; margin-top: -0.5rem; margin-bottom: 1rem;}
+        .helptext { font-size: 0.8rem; color: #6c757d; display: block; margin-top: 0.25rem; }
+    </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+    <div class="auth-card row g-0">
+        <!-- Left Side: Branding (Hidden on very small screens) -->
+        <div class="col-md-5 auth-brand d-none d-md-flex">
+            <h2 class="fw-bold mb-3">AI Job Portal</h2>
+            <p class="text-white-50">Log in to track your applications and let our AI match your resume with your next big career move.</p>
+        </div>
+        
+        <!-- Right Side: Login Form -->
+        <div class="col-md-7 auth-form-container">
+            <h3 class="mb-4 fw-bold text-dark">Welcome Back</h3>
+            
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary w-100 py-2 mt-3 fw-bold shadow-sm" style="border-radius: 0.5rem;">Log In</button>
+            </form>
+            
+            <p class="text-center mt-4 text-muted" style="font-size: 0.9rem;">
+                Don't have an account? <a href="{% url 'register' %}" class="text-primary text-decoration-none fw-bold">Register here</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
