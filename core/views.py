@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from .models import JobPosting, Application
 from .forms import ApplicationForm
-from .utils import extract_text_from_pdf, evaluate_resume_with_gemini # <-- NEW IMPORT
+from .utils import extract_text_from_pdf, evaluate_resume_with_local_model # <-- NEW IMPORT
 from django.contrib.auth import login
 from .forms import CandidateRegistrationForm
 from django.core.mail import send_mail
@@ -30,7 +30,7 @@ def apply_for_job(request, job_id):
             
             # 2. Send to Gemini if text was successfully extracted
             if extracted_text:
-                score, justification = evaluate_resume_with_gemini(extracted_text, job.core_requirements)
+                score, justification = evaluate_resume_with_local_model(extracted_text, job.core_requirements)
                 application.ai_match_score = score
                 application.ai_justification = justification
                 

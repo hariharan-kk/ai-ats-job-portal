@@ -1,7 +1,6 @@
 import PyPDF2
-import google.generativeai as genai
 import json
-from django.conf import settings
+import ollama 
 
 def extract_text_from_pdf(pdf_file):
     """Extracts raw text from an uploaded PDF file."""
@@ -16,15 +15,8 @@ def extract_text_from_pdf(pdf_file):
         print(f"PDF Extraction Error: {e}")
         return ""
 
-def evaluate_resume_with_gemini(resume_text, job_requirements):
-    """Sends the resume and requirements to Gemini and returns a score and justification."""
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    
-    # THE FIX: We added the generation_config to FORCE pure JSON output
-    model = genai.GenerativeModel(
-        'gemini-2.5-flash',
-        generation_config={"response_mime_type": "application/json"}
-    )
+def evaluate_resume_with_local_model(resume_text, job_requirements):
+    """Sends the resume to local Qwen 2.5 and returns a score and justification."""
     
     prompt = f"""
     You are an expert technical recruiter and AI ATS system.
@@ -42,14 +34,19 @@ def evaluate_resume_with_gemini(resume_text, job_requirements):
     """
     
     try:
-        response = model.generate_content(prompt)
+        # Call the local Ollama server
+        response = ollama.chat(model='qwen2.5:3b', messages=[
+            {
+                'role': 'user',
+                'content': prompt,
+            },
+        ], format='json') 
         
-        # THE FIX: Because we forced JSON mode above, we can delete the messy .replace() cleaner
-        # We just load the raw text directly into JSON now!
-        result = json.loads(response.text)
+        # Parse the JSON string
+        result = json.loads(response['message']['content'])
         
         return result.get('score', 0), result.get('justification', "Failed to generate justification.")
+    
     except Exception as e:
-        # If it still fails, it will print exactly WHY to your terminal
-        print(f"Gemini API Error: {e}")
-        return 0, "Error evaluating resume."
+        print(f"Local AI Error: {e}")
+        return 0, "Error evaluating resume with local model."

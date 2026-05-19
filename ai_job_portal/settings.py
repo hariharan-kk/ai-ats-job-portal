@@ -120,8 +120,7 @@ STATIC_URL = 'static/'
 
 AUTH_USER_MODEL = 'core.User'
 
-# Google Gemini API Key
-GEMINI_API_KEY = "YOUR_API_KEY_HERE"
+
 
 # --- EMAIL CONFIGURATION ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

@@ -1,19 +1,22 @@
-# 🚀 AI-Powered Applicant Tracking System (ATS)
+# 🚀 Offline AI Applicant Tracking System (ATS)
 
-An intelligent, full-stack Django web application designed to automate the initial screening phase of technical recruitment. This system utilizes Google's Generative AI (`gemini-2.5-flash`) to parse uploaded resumes, evaluate them against specific job requirements in real-time, and generate actionable match scores for HR teams.
+A privacy-first, full-stack Django web application designed to automate technical recruitment screening using localized Artificial Intelligence. By entirely removing cloud dependencies, this system utilizes a local Small Language Model (Qwen 2.5 via Ollama) to parse unstructured resumes, evaluate them against core job requirements, and output strict JSON match scores—all while keeping sensitive candidate data 100% on-premise.
+
+**Developed by Angith Krishna B**
 
 ## 🌟 Key Features
 
-* **Intelligent Resume Parsing:** Extracts unstructured text from candidate PDF uploads using `PyPDF2`.
-* **Automated AI Screening:** Integrates with the Google Gemini API (forced into strict JSON output mode) to evaluate candidate skills against core job requirements, returning a precise percentage match and justification.
-* **Role-Based Access Control:** Custom middleware to isolate Candidate Dashboards from the Secure HR Admin Portal.
+* **100% Offline AI Screening:** Replaced cloud APIs with a local instance of the Qwen 2.5 (3B) model using Ollama, ensuring zero-cost inference and total data privacy.
+* **Intelligent Document Parsing:** Extracts raw text from candidate PDF uploads using `PyPDF2`.
+* **Prompt Engineering for Strict JSON:** Custom system prompts force the local LLM to bypass conversational chat and return structured, database-ready JSON payloads.
+* **Role-Based Access Control:** Custom middleware physically isolates Candidate Application Dashboards from the Secure HR Admin Portal.
 * **Interactive HR Command Center:** A heavily customized Django Admin interface featuring inline status editing, automated candidate sorting by AI score, and an integrated interview scheduler.
-* **Automated SMTP Email Pipeline:** Backend triggers that automatically email candidates based on AI evaluation thresholds and interview scheduling events.
+* **Automated SMTP Email Pipeline:** Backend `save()` overrides automatically trigger and email Google Meet/Zoom invitations to candidates when HR updates their status.
 
 ## 🛠️ Tech Stack
 
 * **Backend:** Python, Django 5.x
-* **AI / NLP:** Google Gemini 2.5 Flash API (`google.generativeai`)
+* **AI / ML Engine:** Ollama, Qwen 2.5 (3-Billion Parameter Model)
 * **Data Processing:** PyPDF2
 * **Frontend:** HTML5, Bootstrap 5
 * **Database:** SQLite (Development)
@@ -24,54 +27,62 @@ An intelligent, full-stack Django web application designed to automate the initi
 ### 1. The Candidate Flow
 1. User browses active technical job postings.
 2. User uploads a PDF resume via the secure application portal.
-3. The system extracts the text and sends a structured prompt to Gemini.
-4. The AI returns a JSON payload containing the match score.
-5. The application is saved, and the candidate instantly receives an automated email regarding their Shortlisted or Rejected status.
+3. The system extracts the text and sends a structured prompt to the local Ollama server running on the host machine.
+4. The Qwen model returns a JSON payload containing a precise percentage match and justification.
+5. The application is saved, and the candidate instantly receives an automated email regarding their status.
 
 ### 2. The HR Admin Flow
 1. HR logs into the secure backend portal.
 2. The dashboard displays all candidates, automatically sorted with the highest AI match scores at the top.
-3. HR can review the AI's justification and the extracted resume text.
+3. HR can review the AI's justification and the extracted resume text without any data ever leaving the local network.
 4. If selected, HR updates the status to "HR Interviewing" and inputs a date/venue.
-5. A custom Django `save()` method intercepts the database update and automatically fires off a calendar invitation email to the candidate.
+5. A custom Django method intercepts the database update and automatically fires off a calendar invitation email to the candidate.
 
 ## 🚀 Local Installation & Setup
 
-**1. Clone the repository**
+**1. Install the Local AI Engine**
+Download and install [Ollama](https://ollama.com/). Once installed, open your terminal and pull the Qwen 2.5 model:
+\`\`\`bash
+ollama run qwen2.5:3b
+\`\`\`
+
+**2. Clone the repository**
 \`\`\`bash
 git clone https://github.com/yourusername/ai-ats-job-portal.git
 cd ai-ats-job-portal
 \`\`\`
 
-**2. Create and activate a virtual environment**
+**3. Create and activate a virtual environment**
 \`\`\`bash
 python -m venv venv
-source venv/Scripts/activate  # On Windows
+# On Windows:
+venv\Scripts\activate  
+# On macOS/Linux:
+source venv/bin/activate
 \`\`\`
 
-**3. Install dependencies**
+**4. Install dependencies**
 \`\`\`bash
-pip install django PyPDF2 google-generativeai
+pip install django PyPDF2 ollama
 \`\`\`
 
-**4. Configure Environment Variables**
-Open `settings.py` and add your secure credentials:
-* `GEMINI_API_KEY = "your_google_ai_studio_key"`
+**5. Configure Environment Variables**
+Open `settings.py` and add your secure email credentials for the automated scheduling pipeline:
 * `EMAIL_HOST_USER = "your_gmail_address"`
 * `EMAIL_HOST_PASSWORD = "your_16_character_app_password"`
 
-**5. Run Database Migrations**
+**6. Run Database Migrations**
 \`\`\`bash
 python manage.py makemigrations
 python manage.py migrate
 \`\`\`
 
-**6. Create a Superuser (HR Admin)**
+**7. Create a Superuser (HR Admin)**
 \`\`\`bash
 python manage.py createsuperuser
 \`\`\`
 
-**7. Start the Development Server**
+**8. Start the Development Server**
 \`\`\`bash
 python manage.py runserver
 \`\`\`
