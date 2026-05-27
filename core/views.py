@@ -7,6 +7,9 @@ from django.contrib.auth import login
 from .forms import CandidateRegistrationForm
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
+from .models import Question, CandidateTest
+from django.urls import reverse
 
 def job_list(request):
     jobs = JobPosting.objects.filter(is_active=True).order_by('-posting_date')
@@ -42,6 +45,33 @@ def apply_for_job(request, job_id):
             
             # Save the final application with all AI data attached
             application.save()
+            # 1. Create the blank test record in the database
+            test_instance = CandidateTest.objects.create(application=application)
+            # 2. Build the absolute URL (e.g., http://127.0.0.1:8000/test/uuid-here/)
+            test_url = request.build_absolute_uri(
+                reverse('take_aptitude_test', args=[test_instance.secure_id])
+            )
+            # 3. Email the candidate their secure link
+            subject = f"Required: Aptitude Test for {job.title}"
+            message = f"""
+            Hi {request.user.username},
+
+            Thank you for applying. Before we proceed with your AI application review, please complete the required technical aptitude test. 
+
+            Click your secure, one-time link below to begin:
+            {test_url}
+
+            Best of luck,
+            The HR Team
+            """
+            send_mail(
+                subject,
+                message,
+                settings.EMAIL_HOST_USER,
+                [request.user.email],
+                fail_silently=False,
+            )
+
             
             # --- NEW EMAIL NOTIFICATION LOGIC ---
             # We check the status we just saved to format the email text
@@ -110,3 +140,40 @@ def job_detail(request, job_id):
     # Fetch the specific job or return a 404 if it doesn't exist
     job = get_object_or_404(JobPosting, id=job_id)
     return render(request, 'core/job_detail.html', {'job': job})
+
+def take_aptitude_test(request, secure_id):
+    """Displays the test to the candidate and auto-grades it upon submission."""
+    # Find the specific test using the secure UUID from the URL
+    test_instance = get_object_or_404(CandidateTest, secure_id=secure_id)
+    
+    # SECURITY: If they already took it, block them from taking it again
+    if test_instance.is_completed:
+        return render(request, 'core/test_already_completed.html')
+        
+    # Grab all the questions HR created in the database
+    questions = Question.objects.all()
+    
+    if request.method == 'POST':
+        correct_answers = 0
+        total_questions = questions.count()
+        
+        # The Auto-Grader loop
+        for q in questions:
+            # Check what the user selected (HTML input names will be "question_1", "question_2", etc.)
+            user_choice = request.POST.get(f'question_{q.id}') 
+            if user_choice == q.correct_answer:
+                correct_answers += 1
+                
+        # Calculate the final percentage (0 to 100)
+        final_score = int((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+        
+        # Save the results to the database for HR to see
+        test_instance.score = final_score
+        test_instance.is_completed = True
+        test_instance.completed_at = timezone.now()
+        test_instance.save()
+        
+        return render(request, 'core/test_success.html', {'score': final_score})
+        
+    # If it's a GET request, just show them the test form
+    return render(request, 'core/take_test.html', {'questions': questions, 'test_instance': test_instance})

@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.mail import send_mail # NEW IMPORT
 from django.conf import settings
+import uuid
 
 # 1. Extended User Model
 class User(AbstractUser):
@@ -49,18 +50,17 @@ class Application(models.Model):
     candidate = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'is_candidate': True})
     job = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name='applications')
     resume = models.FileField(upload_to='resumes/', help_text="Upload PDF resume.")
-    extracted_text = models.TextField(blank=True, null=True, help_text="Raw text extracted from the PDF.")
     ai_match_score = models.FloatField(blank=True, null=True, help_text="Percentage match returned by Gemini.")
     ai_justification = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     applied_at = models.DateTimeField(auto_now_add=True)
+    extracted_text = models.TextField(blank=True, null=True, help_text="Raw text extracted from the PDF for HR keyword searching.")
 
     # --- NEW INTERVIEW FIELDS ---
     interview_time = models.DateTimeField(null=True, blank=True, help_text="Set the date and time for the interview")
     interview_venue = models.CharField(max_length=255, null=True, blank=True, help_text="Zoom link, Google Meet, or physical address")
 
-    def __str__(self):
-        return f"{self.candidate.username} applied for {self.job.title}"
+
 
     # --- NEW AUTOMATION LOGIC ---
     def save(self, *args, **kwargs):
@@ -108,3 +108,38 @@ The HR Team
         super().save(*args, **kwargs)
     def __str__(self):
         return f"{self.candidate.username} applied for {self.job.title}"
+    
+
+class Question(models.Model):
+    """Stores the multiple-choice questions created by HR"""
+    text = models.CharField(max_length=500, help_text="The question you want to ask.")
+    option_a = models.CharField(max_length=200)
+    option_b = models.CharField(max_length=200)
+    option_c = models.CharField(max_length=200)
+    option_d = models.CharField(max_length=200)
+    
+    CORRECT_CHOICES = [
+        ('A', 'Option A'),
+        ('B', 'Option B'),
+        ('C', 'Option C'),
+        ('D', 'Option D'),
+    ]
+    correct_answer = models.CharField(max_length=1, choices=CORRECT_CHOICES)
+
+    def __str__(self):
+        return self.text
+
+class CandidateTest(models.Model):
+    """Generates a secure link for the candidate and stores their final score"""
+    # NOTE: Change 'Application' to match whatever your candidate model is named!
+    application = models.OneToOneField('Application', on_delete=models.CASCADE, related_name='aptitude_test')
+    
+    # This creates the secure, unguessable link (e.g., website.com/test/123e4567-e89b-12d3...)
+    secure_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    
+    is_completed = models.BooleanField(default=False)
+    score = models.IntegerField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Aptitude Test for {self.application}"

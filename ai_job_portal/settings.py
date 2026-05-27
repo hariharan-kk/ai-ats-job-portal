@@ -129,12 +129,16 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # Replace with the email address you used to generate the App Password
-EMAIL_HOST_USER = 'your_email_@gmail.com' 
+EMAIL_HOST_USER = 'hariharanharikrishnan@gmail.com' 
 
 # Replace with the 16-character password from Step 1 (NO SPACES)
-EMAIL_HOST_PASSWORD = 'your email host password'
+EMAIL_HOST_PASSWORD = 'mmsxxxizhjybzofc'
 
 # --- AUTHENTICATION REDIRECTS ---
 LOGIN_REDIRECT_URL = 'job_list'   # Where to go after a successful login
 LOGOUT_REDIRECT_URL = 'job_list'  # Where to go after logging out
 LOGIN_URL = 'login'               # Where to send users if they try to access a protected page
+
+# This tells Django where to store and find uploaded PDFs
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

@@ -1,0 +1,19 @@
+<h2>Technical Aptitude Test</h2>
+<p>Warning: Do not refresh this page. This is a one-time secure link.</p>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    {% for q in questions %}
+    <div style="margin-bottom: 20px;">
+        <p><strong>{{ forloop.counter }}. {{ q.text }}</strong></p>
+        
+        <input type="radio" name="question_{{ q.id }}" value="A" required> A) {{ q.option_a }}<br>
+        <input type="radio" name="question_{{ q.id }}" value="B"> B) {{ q.option_b }}<br>
+        <input type="radio" name="question_{{ q.id }}" value="C"> C) {{ q.option_c }}<br>
+        <input type="radio" name="question_{{ q.id }}" value="D"> D) {{ q.option_d }}<br>
+    </div>
+    {% endfor %}
+    
+    <button type="submit">Submit Final Answers</button>
+</form>
