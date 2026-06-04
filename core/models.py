@@ -111,7 +111,12 @@ The HR Team
     
 
 class Question(models.Model):
-    """Stores the multiple-choice questions created by HR"""
+    """Stores the multiple-choice questions created by HR or the AI"""
+    
+    # --- NEW FIELD: Links a question to a specific test ---
+    # We use quotes around 'CandidateTest' because the class is defined further down in the file
+    test = models.ForeignKey('CandidateTest', on_delete=models.CASCADE, related_name='custom_questions', null=True, blank=True)
+    
     text = models.CharField(max_length=500, help_text="The question you want to ask.")
     option_a = models.CharField(max_length=200)
     option_b = models.CharField(max_length=200)
