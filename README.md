@@ -2,7 +2,7 @@
 
 A privacy-first, full-stack Django web application designed to automate technical recruitment screening using localized Artificial Intelligence. By entirely removing cloud dependencies, this system utilizes a local Small Language Model (Qwen 2.5 via Ollama) to parse unstructured resumes, evaluate them against core job requirements, and output strict JSON match scores—all while keeping sensitive candidate data 100% on-premise.
 
-**Developed by Angith Krishna B**
+**Developed by HARIHARAN K K**
 
 ## 🌟 Key Features
 

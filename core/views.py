@@ -207,4 +207,4 @@ def take_aptitude_test(request, secure_id):
         
         return render(request, 'core/test_success.html', {'score': final_score})
         
-    return render(request, 'core/take_test.html', {'questions': questions, 'test_instance': test_instance})
+    return render(request, 'core/take_test.html', {'questions': questions, 'test_instance': test_instance}) 
