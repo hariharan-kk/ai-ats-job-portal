@@ -130,10 +130,10 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # Replace with the email address you used to generate the App Password
-EMAIL_HOST_USER = 'hariharanharikrishnan@gmail.com' 
+EMAIL_HOST_USER = 'YOUR EMAIL ADDRESS'
 
 # Replace with the 16-character password from Step 1 (NO SPACES)
-EMAIL_HOST_PASSWORD = 'mmsxxxizhjybzofc'
+EMAIL_HOST_PASSWORD = 'EMAIL PASSWORD'
 
 # --- AUTHENTICATION REDIRECTS ---
 LOGIN_REDIRECT_URL = 'job_list'   # Where to go after a successful login
@@ -151,7 +151,6 @@ JAZZMIN_SETTINGS = {
     "site_header": "Recruitment Portal",
     "site_brand": "HR Dashboard",
     "welcome_sign": "Welcome to the Recruitment Admin Portal",
-    "copyright": "Nuventure Connect & Clovion Technologies",
     "hide_apps": ["auth"], # Hides the confusing Authentication/Groups section from HR
     
     # Adds professional icons to your sidebar menu
