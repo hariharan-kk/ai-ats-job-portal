@@ -31,7 +31,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -57,7 +56,7 @@ ROOT_URLCONF = 'ai_job_portal.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -119,6 +118,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# --- ADD THIS BLOCK ---
+# This tells Django to look for static files in a global root folder
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 AUTH_USER_MODEL = 'core.User'
 
 
@@ -144,31 +149,3 @@ LOGIN_URL = 'login'               # Where to send users if they try to access a 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-
-# --- JAZZMIN UI SETTINGS ---
-JAZZMIN_SETTINGS = {
-    "site_title": "HR Job Portal",
-    "site_header": "Recruitment Portal",
-    "site_brand": "HR Dashboard",
-    "welcome_sign": "Welcome to the Recruitment Admin Portal",
-    "hide_apps": ["auth"], # Hides the confusing Authentication/Groups section from HR
-    
-    # Adds professional icons to your sidebar menu
-    "icons": {
-        "core.Application": "fas fa-file-contract",
-        "core.JobPosting": "fas fa-briefcase",
-        "core.CandidateTest": "fas fa-clipboard-check",
-        "core.Question": "fas fa-question-circle",
-    },
-    "show_ui_builder": True, 
-}
-
-# --- JAZZMIN THEME (Clean & Professional) ---
-JAZZMIN_UI_TWEAKS = {
-    "theme": "flatly", # A crisp, professional light theme
-    "navbar": "navbar-white navbar-light", # Clean white top bar
-    "sidebar": "sidebar-light-primary", # Clean white sidebar with blue accents
-    "sidebar_nav_child_indent": True,
-    "sidebar_nav_compact_style": True,
-    "actions_sticky_top": True
-}

@@ -10,6 +10,8 @@ from django.conf import settings
 from django.utils import timezone
 from .models import Question, CandidateTest
 from django.urls import reverse
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Q
 
 def job_list(request):
     jobs = JobPosting.objects.filter(is_active=True).order_by('-posting_date')
@@ -207,4 +209,87 @@ def take_aptitude_test(request, secure_id):
         
         return render(request, 'core/test_success.html', {'score': final_score})
         
-    return render(request, 'core/take_test.html', {'questions': questions, 'test_instance': test_instance}) 
+    return render(request, 'core/take_test.html', {'questions': questions, 'test_instance': test_instance})
+
+# 1. THE SECURITY GUARD
+# This function returns True if the user is a superuser OR if they belong to the 'HR' group
+def is_hr_or_superuser(user):
+    return user.is_superuser or getattr(user, 'is_hr', False) or user.groups.filter(name='HR').exists()
+
+# 2. THE DASHBOARD VIEW
+@login_required(login_url='/login/') 
+@user_passes_test(is_hr_or_superuser, login_url='/login/')
+def custom_hr_dashboard(request):
+    # We grab the text from both search bars independently
+    app_search_query = request.GET.get('q', '') 
+    job_search_query = request.GET.get('job_q', '') 
+    
+    # --- JOB SEARCH LOGIC ---
+    if job_search_query:
+        # Search jobs by title or the core requirements
+        recent_jobs = JobPosting.objects.filter(
+            Q(title__icontains=job_search_query) | 
+            Q(core_requirements__icontains=job_search_query)
+        ).order_by('-posting_date')
+    else:
+        # Default: just show the 5 most recent
+        recent_jobs = JobPosting.objects.all().order_by('-posting_date')[:5]
+
+    # --- APPLICATION SEARCH LOGIC ---
+    if app_search_query:
+        recent_applications = Application.objects.filter(
+            Q(candidate__username__icontains=app_search_query) |
+            Q(job__title__icontains=app_search_query) |
+            Q(extracted_text__icontains=app_search_query)
+        ).order_by('-applied_at')
+    else:
+        # Default: just show the 10 most recent
+        recent_applications = Application.objects.all().order_by('-applied_at')[:10]
+    
+    context = {
+        'recent_jobs': recent_jobs,
+        'recent_applications': recent_applications,
+        'search_query': app_search_query,
+        'job_search_query': job_search_query,
+    }
+    
+    return render(request, 'core/hr_dashboard.html', context)
+
+
+# 3. THE CANDIDATE MANAGEMENT VIEW
+@login_required(login_url='/login/')
+@user_passes_test(is_hr_or_superuser, login_url='/login/')
+def hr_application_detail(request, app_id):
+    # Get the specific application
+    application = get_object_or_404(Application, id=app_id)
+    
+    # If HR submits the form to update status/interview details
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        interview_time = request.POST.get('interview_time')
+        interview_venue = request.POST.get('interview_venue')
+        
+        if new_status:
+            application.status = new_status
+        if interview_time:
+            application.interview_time = interview_time
+        if interview_venue:
+            application.interview_venue = interview_venue
+            
+        application.save() # This triggers your automated email if status is 'HR Interviewing'!
+        
+        return redirect('hr_dashboard') # Send them back to the main dashboard
+
+    # Get the test associated with this application (if it exists)
+    try:
+        candidate_test = CandidateTest.objects.get(application=application)
+    except CandidateTest.DoesNotExist:
+        candidate_test = None
+
+    context = {
+        'app': application,
+        'test': candidate_test,
+        # Pass all available status choices from your models.py
+        'status_choices': Application.STATUS_CHOICES, 
+    }
+    return render(request, 'core/hr_application_detail.html', context)

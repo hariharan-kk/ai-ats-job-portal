@@ -1,0 +1,105 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if title %}{{ title }} | {% endif %}HR Recruitment Portal{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<style>
+    /* 1. Global Background & Fonts */
+    body {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+        background-color: #f3f4f6 !important; /* Soft modern gray background */
+        color: #1f2937 !important;
+    }
+
+    /* 2. Top Header Navigation */
+    #header {
+        background: #ffffff !important;
+        color: #111827 !important;
+        border-bottom: 1px solid #e5e7eb;
+        padding: 15px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    #header a:link, #header a:visited {
+        color: #2563eb !important;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    #branding h1 {
+        color: #111827 !important;
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    /* 3. Main Content Tables (Applications, Job Postings, etc.) */
+    .module {
+        background: #ffffff !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+        border: 1px solid #e5e7eb !important;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    /* Table Headers (Blue bars) */
+    .module caption, .module h2 {
+        caption-side: top !important;
+        background-color: #f8fafc !important;
+        color: #334155 !important;
+        font-weight: 600 !important;
+        font-size: 14px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 12px 15px !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+    /* Table Rows & Cells */
+    tr {
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+    td, th {
+        padding: 12px 15px !important;
+        font-size: 14px;
+        border-bottom: none !important;
+    }
+    a {
+        color: #2563eb !important;
+        text-decoration: none !important;
+    }
+    a:hover {
+        text-decoration: underline !important;
+    }
+
+    /* 4. The "Recent Actions" Sidebar */
+    #recent-actions-module {
+        background: #ffffff !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05) !important;
+        border: 1px solid #e5e7eb !important;
+    }
+    #recent-actions-module h2 {
+        background-color: #f8fafc !important;
+        color: #334155 !important;
+    }
+
+    /* 5. Clean up unused default UI */
+    #theme-toggle {
+        display: none !important; /* Hides the broken dark mode toggle */
+    }
+    #footer {
+        display: none !important; /* Ensures copyright stays hidden */
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="branding">
+    <div class="d-flex align-items-center justify-content-between w-100">
+        <h1>
+            <span class="badge bg-primary me-2">HR</span> 
+            <strong>Recruitment Dashboard</strong>
+        </h1>
+    </div>
+</div>
+{% endblock %}

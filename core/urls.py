@@ -11,6 +11,8 @@ urlpatterns = [
     path('job/<int:job_id>/', views.job_detail, name='job_detail'),
     path('apply/<int:job_id>/', views.apply_for_job, name='apply_for_job'),
     path('dashboard/', views.candidate_dashboard, name='dashboard'),
+    path('hr/', views.custom_hr_dashboard, name='hr_dashboard'),
+    path('hr/application/<int:app_id>/', views.hr_application_detail, name='hr_application_detail'),
     
     # Secure test link
     path('test/<uuid:secure_id>/', views.take_aptitude_test, name='take_aptitude_test'),

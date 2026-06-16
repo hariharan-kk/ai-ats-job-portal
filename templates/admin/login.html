@@ -1,0 +1,147 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<style>
+    /* Full screen centering with a subtle soft gradient background */
+    body.login {
+        background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 100vh !important;
+        margin: 0 !important;
+        padding: 20px !important;
+        font-family: 'Inter', system-ui, sans-serif !important;
+    }
+
+    /* Hide default Django container wrappers on the login page */
+    #container {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        max-width: 420px !important;
+        margin: 0 auto !important;
+    }
+
+    #header, .breadcrumbs {
+        display: none !important; /* Hide the dashboard header on login screen */
+    }
+
+    /* Modern Login Card Card Styling */
+    .login-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e5e7eb;
+        padding: 40px 30px;
+        width: 100%;
+    }
+
+    .login-header-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 5px;
+    }
+
+    .login-header-subtitle {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 30px;
+    }
+
+    /* Form Fields styling */
+    .form-label {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.875rem;
+        margin-bottom: 6px;
+    }
+
+    .form-control {
+        padding: 10px 14px !important;
+        border-radius: 6px !important;
+        border: 1px solid #d1d5db !important;
+        font-size: 0.95rem !important;
+        background-color: #ffffff !important;
+        color: #111827 !important;
+    }
+
+    .form-control:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+    }
+
+    /* Primary Login Action Button */
+    .btn-submit {
+        background-color: #2563eb !important;
+        border: none !important;
+        padding: 11px !important;
+        font-weight: 600 !important;
+        font-size: 0.95rem !important;
+        border-radius: 6px !important;
+        transition: background-color 0.2s ease !important;
+        width: 100%;
+        color: #ffffff !important;
+        margin-top: 10px;
+    }
+
+    .btn-submit:hover {
+        background-color: #1d4ed8 !important;
+    }
+
+    /* Error Messages Styling */
+    .errornote {
+        font-size: 0.875rem !important;
+        border-radius: 6px !important;
+        padding: 12px !important;
+        background-color: #fef2f2 !important;
+        border: 1px solid #fca5a5 !important;
+        color: #991b1b !important;
+        margin-bottom: 20px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-card">
+    <div class="text-center">
+        <span class="badge bg-primary px-2.5 py-1.5 mb-2 font-semibold">HR MANAGEMENT</span>
+        <div class="login-header-title">Welcome Back</div>
+        <div class="login-header-subtitle">Sign in to manage candidate workflows</div>
+    </div>
+
+    {% if form.errors and not form.non_field_errors %}
+    <p class="errornote">
+    {% if form.errors.items|length == 1 %}{% translate "Please correct the error below." %}{% else %}{% translate "Please correct the errors below." %}{% endif %}
+    </p>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    {% for error in form.non_field_errors %}
+    <p class="errornote">
+        {{ error }}
+    </p>
+    {% endfor %}
+    {% endif %}
+
+    <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
+        <div class="mb-3">
+            <label for="id_username" class="form-label">Username</label>
+            <input type="text" name="username" autofocus required id="id_username" class="form-control" placeholder="Enter your username">
+        </div>
+        
+        <div class="mb-4">
+            <label for="id_password" class="form-label">Password</label>
+            <input type="password" name="password" required id="id_password" class="form-control" placeholder="••••••••">
+            <input type="hidden" name="next" value="{{ next }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-submit">Sign In</button>
+    </form>
+</div>
+{% endblock %}
