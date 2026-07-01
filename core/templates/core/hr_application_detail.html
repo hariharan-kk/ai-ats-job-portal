@@ -3,86 +3,249 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manage Application | HR Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Review | TalentOS</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body { background-color: #f3f4f6; font-family: 'Inter', sans-serif; color: #1f2937; }
-        .hr-navbar { background: #ffffff; border-bottom: 1px solid #e5e7eb; padding: 15px 20px; }
-        .content-card { background: #ffffff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e5e7eb; padding: 25px; margin-bottom: 20px; }
-        .section-title { font-size: 0.85rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; }
+        /* Shared Deep Navy Admin Theme */
+        :root {
+            --bg-dark: #0f1528;
+            --bg-sidebar: #131b31;
+            --bg-card: #1b2541;
+            --bg-hover: #233054;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;
+            --accent-red: #f43f5e;
+            --border-color: #2a365c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+        .sidebar-brand { padding: 20px 24px; font-size: 1.25rem; font-weight: 700; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+        .brand-logo { color: var(--accent-red); font-size: 1.5rem; font-weight: 900; letter-spacing: -1px; }
+        .sidebar-menu { flex-grow: 1; padding: 20px 0; overflow-y: auto; }
+        .menu-section { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; padding: 0 24px; margin-bottom: 10px; margin-top: 20px; }
+        .menu-item { padding: 10px 24px; display: block; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+        .menu-item:hover, .menu-item.active { color: var(--text-main); background-color: var(--bg-hover); border-left: 3px solid var(--accent-cyan); }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex-grow: 1;
+            margin-left: 260px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .top-header { background-color: var(--bg-sidebar); border-bottom: 1px solid var(--border-color); padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .btn-outline-dark { background-color: transparent; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 16px; font-size: 0.85rem; text-decoration: none; }
+        .btn-outline-dark:hover { background-color: var(--bg-hover); color: var(--text-main); }
+        
+        /* Layout Grid */
+        .split-layout {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        /* Left Panel - Details */
+        .details-panel {
+            width: 400px;
+            min-width: 400px;
+            background-color: var(--bg-dark);
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* Right Panel - Resume Viewer */
+        .resume-panel {
+            flex-grow: 1;
+            background-color: #1a1a1a; /* Darker background to make PDF pop */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Detail Cards */
+        .info-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .candidate-avatar {
+            width: 60px;
+            height: 60px;
+            background-color: var(--accent-cyan);
+            color: #000;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .score-circle {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            background-color: rgba(0,0,0,0.2);
+            border: 1px solid var(--border-color);
+        }
+        .score-high { color: #10b981; border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); }
+        .score-low { color: var(--accent-red); border-color: var(--accent-red); box-shadow: 0 0 10px rgba(244, 63, 94, 0.2); }
+
+        /* Form Inputs */
+        .dark-select {
+            width: 100%;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .dark-select:focus { outline: none; border-color: var(--accent-cyan); }
+        
+        .btn-cyan { background-color: var(--accent-cyan); color: #000; font-weight: 700; border: none; border-radius: 6px; padding: 10px 16px; width: 100%; transition: opacity 0.2s; }
+        .btn-cyan:hover { background-color: #22d3ee; }
+
+        /* Embedded PDF */
+        iframe.pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg hr-navbar mb-5">
-        <div class="container" style="max-width: 1000px;">
-            <a class="navbar-brand text-dark fw-bold" href="{% url 'hr_dashboard' %}">← Back to Dashboard</a>
-        </div>
-    </nav>
-
-    <div class="container" style="max-width: 1000px;">
-        <div class="row gap-4">
+    <aside class="sidebar">
+        <div class="sidebar-brand"><span class="brand-logo">N</span>TalentOS</div>
+        <div class="sidebar-menu">
+            <div class="menu-section">Management</div>
+            <a href="{% url 'hr_dashboard' %}" class="menu-item">Master Dashboard</a>
             
-            <div class="col-md-7">
-                <div class="content-card">
-                    <h2 class="mb-0 fw-bold">{{ app.candidate.username|title }}</h2>
-                    <p class="text-muted fs-5">Applying for: <strong>{{ app.job.title }}</strong></p>
-                    
-                    <div class="mt-4">
-                        <div class="section-title">AI Evaluation (Score: {{ app.ai_match_score }}%)</div>
-                        <p style="white-space: pre-wrap;">{{ app.ai_justification|default:"No AI justification available." }}</p>
-                    </div>
+            <div class="menu-section">Recruitment</div>
+            <a href="#" class="menu-item active">Applicant Management</a>
+            <a href="{% url 'hr_dashboard' %}#jobs" class="menu-item">Job Postings</a>
+            
+            <div class="menu-section">System</div>
+            <a href="{% url 'add_job_posting' %}" class="menu-item">Post New Role</a>
+        </div>
+    </aside>
 
-                    <div class="mt-4">
-                        <div class="section-title">Technical Aptitude Test</div>
-                        {% if test %}
-                            {% if test.is_completed %}
-                                <p class="mb-1"><strong>Final Score:</strong> <span class="badge bg-primary fs-6">{{ test.score }}%</span></p>
-                                <p class="text-muted small">Completed on: {{ test.completed_at|date:"M d, Y" }}</p>
-                            {% else %}
-                                <p class="text-warning fw-bold">Test Sent - Waiting for candidate to complete.</p>
-                            {% endif %}
-                        {% else %}
-                            <p class="text-muted">No test generated for this candidate.</p>
-                        {% endif %}
+    <main class="main-content">
+        
+        <header class="top-header">
+            <div class="text-muted" style="font-size: 0.85rem;">
+                <a href="{% url 'hr_dashboard' %}" style="color: var(--text-muted); text-decoration: none;">Dashboard</a> 
+                <span class="mx-2">/</span> 
+                <span style="color: var(--text-main);">Candidate Review</span>
+            </div>
+            <a href="/logout/" class="btn-outline-dark text-decoration-none py-1 px-3">Sign Out</a>
+        </header>
+
+        <div class="split-layout">
+            
+            <div class="details-panel">
+                
+                <div class="info-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="candidate-avatar">
+                            {{ app.candidate.username|make_list|first|upper }}
+                        </div>
+                        <span class="badge bg-secondary">{{ app.status }}</span>
+                    </div>
+                    <h3 style="font-weight: 700; margin: 0;">{{ app.candidate.username|title }}</h3>
+                    <p style="color: var(--accent-cyan); font-weight: 600; font-size: 0.85rem; margin-top: 5px;">{{ app.job.title }}</p>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 15px;">
+                        <strong>Applied:</strong> {{ app.applied_at|date:"F d, Y" }}
                     </div>
                 </div>
-            </div>
 
-            <div class="col-md-4">
-                <div class="content-card">
-                    <div class="section-title">Take Action</div>
+                <div class="info-card">
+                    <h6 style="color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 15px;">AI Match Analysis</h6>
+                    
+                    <div class="mb-3">
+                        {% if app.ai_match_score >= 50 %}
+                            <div class="score-circle score-high">{{ app.ai_match_score }}% Match</div>
+                        {% else %}
+                            <div class="score-circle score-low">{{ app.ai_match_score|default:"N/A" }}% Match</div>
+                        {% endif %}
+                    </div>
+
+                    <p style="font-size: 0.85rem; line-height: 1.6; color: var(--text-main); margin: 0;">
+                        {% if app.ai_justification %}
+                            {{ app.ai_justification }}
+                        {% else %}
+                            <span style="color: var(--text-muted);">AI evaluation is currently pending or was not generated for this application.</span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h6 style="color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; margin-bottom: 15px;">Pipeline Status</h6>
                     
                     <form method="POST">
                         {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small">Current Status</label>
-                            <select name="status" class="form-select">
-                                {% for value, label in status_choices %}
-                                    <option value="{{ value }}" {% if app.status == value %}selected{% endif %}>
-                                        {{ label }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="mb-4 p-3 bg-light rounded border">
-                            <label class="form-label fw-bold small text-primary">Schedule Interview</label>
-                            <p class="text-muted" style="font-size: 0.8rem;">Fill these out if changing status to "HR Interviewing" to trigger the email.</p>
-                            
-                            <input type="datetime-local" name="interview_time" class="form-control mb-2" value="{{ app.interview_time|date:'Y-m-d\TH:i' }}">
-                            <input type="text" name="interview_venue" class="form-control" placeholder="Zoom Link or Office Location" value="{{ app.interview_venue|default:'' }}">
-                        </div>
-
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">Save Changes</button>
+                        <select name="status" class="dark-select">
+                            <option value="Pending" {% if app.status == 'Pending' %}selected{% endif %}>Pending Review</option>
+                            <option value="Shortlisted" {% if app.status == 'Shortlisted' %}selected{% endif %}>Shortlist Candidate</option>
+                            <option value="HR Interviewing" {% if app.status == 'HR Interviewing' %}selected{% endif %}>Schedule HR Interview</option>
+                            <option value="Rejected" {% if app.status == 'Rejected' %}selected{% endif %}>Reject Candidate</option>
+                        </select>
+                        <button type="submit" class="btn-cyan">Update Pipeline Status</button>
                     </form>
-
                 </div>
+
+            </div>
+
+            <div class="resume-panel">
+                {% if app.resume %}
+                    <iframe src="{{ app.resume.url }}" class="pdf-viewer"></iframe>
+                {% else %}
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100" style="color: var(--text-muted);">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">📄</div>
+                        <h4>No Resume Uploaded</h4>
+                        <p style="font-size: 0.85rem;">This candidate did not provide a PDF document.</p>
+                    </div>
+                {% endif %}
             </div>
 
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

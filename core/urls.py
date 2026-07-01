@@ -13,6 +13,7 @@ urlpatterns = [
     path('dashboard/', views.candidate_dashboard, name='dashboard'),
     path('hr/', views.custom_hr_dashboard, name='hr_dashboard'),
     path('hr/application/<int:app_id>/', views.hr_application_detail, name='hr_application_detail'),
+    path('hr/jobs/add/', views.add_job_posting, name='add_job_posting'),
     
     # Secure test link
     path('test/<uuid:secure_id>/', views.take_aptitude_test, name='take_aptitude_test'),

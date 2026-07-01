@@ -1,15 +1,15 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.mail import send_mail # NEW IMPORT
+from django.core.mail import send_mail
 from django.conf import settings
 import uuid
 
-# 1. Extended User Model
+
 class User(AbstractUser):
     is_hr = models.BooleanField(default=False, help_text="Designates whether the user is an HR/Admin.")
     is_candidate = models.BooleanField(default=True, help_text="Designates whether the user is a standard applicant.")
 
-    # Fix for reverse accessor clashes
+
     groups = models.ManyToManyField(
         'auth.Group',
         related_name='core_user_set',
@@ -25,7 +25,7 @@ class User(AbstractUser):
         verbose_name='user permissions',
     )
 
-# 2. Job Posting Model
+
 class JobPosting(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
@@ -36,7 +36,7 @@ class JobPosting(models.Model):
     def __str__(self):
         return self.title
 
-# 3. Application Model
+
 class Application(models.Model):
     STATUS_CHOICES = (
         ('Pending', 'Pending AI Review'),
@@ -56,25 +56,24 @@ class Application(models.Model):
     applied_at = models.DateTimeField(auto_now_add=True)
     extracted_text = models.TextField(blank=True, null=True, help_text="Raw text extracted from the PDF for HR keyword searching.")
 
-    # --- NEW INTERVIEW FIELDS ---
+
     interview_time = models.DateTimeField(null=True, blank=True, help_text="Set the date and time for the interview")
     interview_venue = models.CharField(max_length=255, null=True, blank=True, help_text="Zoom link, Google Meet, or physical address")
 
 
 
-    # --- NEW AUTOMATION LOGIC ---
+
     def save(self, *args, **kwargs):
-        # Only check for changes if the application already exists in the database
         if self.pk: 
             old_application = Application.objects.get(pk=self.pk)
             
-            # Check if HR just changed the status to 'HR Interviewing'
+
             if old_application.status != 'HR Interviewing' and self.status == 'HR Interviewing':
                 
-                # Draft the Interview Invitation Email
+
                 subject = f"Interview Invitation: {self.job.title}"
                 
-                # Format the date nicely if it exists, otherwise leave a placeholder
+
                 time_str = self.interview_time.strftime("%B %d, %Y at %I:%M %p") if self.interview_time else "TBD"
                 venue_str = self.interview_venue if self.interview_venue else "TBD"
                 

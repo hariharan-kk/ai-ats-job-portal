@@ -4,184 +4,448 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HR Dashboard | Recruitment Portal</title>
+    <title>Dashboard | TalentOS HR</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        /* The Professional Enterprise Theme */
+        /* Deep Navy Admin Theme based on reference images */
+        :root {
+            --bg-dark: #0f1528;      /* Main body background */
+            --bg-sidebar: #131b31;   /* Sidebar background */
+            --bg-card: #1b2541;      /* Card and table background */
+            --bg-hover: #233054;     /* Row hover state */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-cyan: #06b6d4;  /* Primary button color */
+            --accent-red: #f43f5e;   /* Logo/Alert color */
+            --border-color: #2a365c;
+        }
+
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: #f3f4f6;
-            color: #1f2937;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar-brand {
+            padding: 20px 24px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
-        /* Custom HR Navbar */
-        .hr-navbar {
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            padding: 15px 20px;
+        .brand-logo {
+            color: var(--accent-red);
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
         }
-        
-        /* Modern White Cards */
-        .dashboard-card {
-            background: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
-            margin-bottom: 20px;
-            overflow: hidden;
+
+        .sidebar-menu {
+            flex-grow: 1;
+            padding: 20px 0;
+            overflow-y: auto;
         }
-        
-        /* Card Headers */
-        .card-header-custom {
-            background-color: #f8fafc;
-            color: #334155;
-            font-weight: 600;
-            font-size: 14px;
+
+        .menu-section {
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 1px;
+            padding: 0 24px;
+            margin-bottom: 10px;
+            margin-top: 20px;
+        }
+
+        .menu-item {
+            padding: 10px 24px;
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            color: var(--text-main);
+            background-color: var(--bg-hover);
+            border-left: 3px solid var(--accent-cyan);
+        }
+
+        .sidebar-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            background-color: #f59e0b;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex-grow: 1;
+            margin-left: 260px; /* Offset for fixed sidebar */
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Top Header Area */
+        .top-header {
+            background-color: var(--bg-sidebar);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Container padding */
+        .content-pad {
+            padding: 30px;
+        }
+
+        /* --- KPI DASHBOARD CARDS --- */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .kpi-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        /* --- LIST/TABLE PANELS --- */
+        .panel {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .panel-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: var(--text-main);
+        }
+
+        .panel-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .panel-actions {
             padding: 15px 20px;
-            border-bottom: 1px solid #e5e7eb;
+            background-color: rgba(0,0,0,0.1);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Inputs & Buttons matching the theme */
+        .dark-input {
+            background-color: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            min-width: 250px;
+        }
+        .dark-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .btn-cyan {
+            background-color: var(--accent-cyan);
+            color: #000;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            transition: opacity 0.2s;
+        }
+        .btn-cyan:hover { background-color: #22d3ee; color: #000; }
+
+        .btn-outline-dark {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+        .btn-outline-dark:hover { background-color: var(--bg-hover); color: var(--text-main); }
+
+        /* Tables */
+        .table-dark-theme {
+            width: 100%;
+            margin: 0;
+            color: var(--text-main);
+        }
+        .table-dark-theme th {
+            background-color: rgba(0,0,0,0.15);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .table-dark-theme td {
+            padding: 16px 20px;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .table-dark-theme tr:hover td {
+            background-color: var(--bg-hover);
         }
         
-        .card-body-custom {
-            padding: 0; /* Removed padding to let tables span edge-to-edge */
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
         }
+        .dot-active { background-color: #10b981; box-shadow: 0 0 5px #10b981;}
+        .dot-inactive { background-color: var(--text-muted); }
+        .dot-danger { background-color: var(--accent-red); box-shadow: 0 0 5px var(--accent-red);}
+
+        a { color: var(--accent-cyan); text-decoration: none; }
+        a:hover { color: #22d3ee; text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg hr-navbar mb-5">
-        <div class="container" style="max-width: 1200px;">
-            <a class="navbar-brand text-dark d-flex align-items-center" href="#">
-                <span class="badge bg-primary me-2 fs-6">HR</span> 
-                <strong class="fs-5">Recruitment Dashboard</strong>
-            </a>
-            <div class="d-flex align-items-center">
-                <span class="me-4 text-muted fw-semibold">Welcome, {{ request.user.username|title }}</span>
-                <a href="/logout/" class="btn btn-outline-secondary btn-sm fw-bold">Sign Out</a>
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-logo">N</span>TalentOS
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-section">Management</div>
+            <a href="#" class="menu-item active">Master Dashboard</a>
+            
+            <div class="menu-section">Recruitment</div>
+            <a href="#applications" class="menu-item">Applicant Management</a>
+            <a href="#jobs" class="menu-item">Job Postings</a>
+            
+            <div class="menu-section">System</div>
+            <a href="{% url 'add_job_posting' %}" class="menu-item">Post New Role</a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="avatar">{{ request.user.username|make_list|first|upper }}A</div>
+            <div>
+                <div style="font-size: 0.85rem; font-weight: 600; color: #fff;">{{ request.user.username|title }}</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">HR Admin Access</div>
             </div>
         </div>
-    </nav>
+    </aside>
 
-    <div class="container" style="max-width: 1200px;">
-        <div class="row gap-4 justify-content-center">
+    <main class="main-content">
+        
+        <header class="top-header">
+            <div class="text-muted" style="font-size: 0.85rem;">
+                Dashboard <span class="mx-2">/</span> <span style="color: var(--text-main);">Master Control</span>
+            </div>
+            <a href="/logout/" class="btn-outline-dark text-decoration-none">Sign Out</a>
+        </header>
+
+        <div class="content-pad">
             
-            <!-- Left Column: Job Postings -->
-            <div class="col-md-7 dashboard-card p-0">
-                
-                <!-- UPDATED HEADER WITH SEARCH BAR & BUTTON -->
-                <div class="card-header-custom d-flex justify-content-between align-items-center">
-                    <span>Active Job Postings</span>
-                    
-                    <div class="d-flex align-items-center gap-2">
-                        <!-- NEW JOB SEARCH BAR -->
-                        <form method="GET" action="{% url 'hr_dashboard' %}" class="d-flex m-0" style="max-width: 200px;">
-                            <input type="text" name="job_q" class="form-control form-control-sm me-1" placeholder="Search Jobs..." value="{{ job_search_query }}">
-                            <button type="submit" class="btn btn-sm btn-secondary fw-bold">Find</button>
-                        </form>
-                        
-                        <a href="/admin/core/jobposting/add/" class="btn btn-sm btn-primary fw-bold text-nowrap">+ Post New Job</a>
-                    </div>
+            <div class="mb-4">
+                <h3 style="font-weight: 700; margin-bottom: 5px;">Master Control Dashboard</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Platform overview, applicant tracking, and active job management.</p>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value">Live</div>
+                    <div class="kpi-label">Active Portal Status</div>
                 </div>
-                
-                <div class="card-body-custom p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4 py-3">Job Title</th>
-                                <th class="py-3">Status</th>
-                                <th class="py-3">Posted On</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for job in recent_jobs %}
-                            <tr>
-                                <td class="ps-4 py-3 fw-semibold text-primary">{{ job.title }}</td>
-                                <td class="py-3">
-                                    {% if job.is_active %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Closed</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-3 text-muted">{{ job.posting_date|date:"M d, Y" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="3" class="text-center text-muted py-5">No active job postings found. Create one above!</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="kpi-card">
+                    <div class="kpi-value text-success">Active</div>
+                    <div class="kpi-label">AI Engine Operational</div>
                 </div>
             </div>
 
-            <!-- Right Column: Recent Applications -->
-            <div class="col-md-4 dashboard-card p-0">
-                
-                <!-- HEADER WITH APPLICATION SEARCH BAR -->
-                <div class="card-header-custom d-flex justify-content-between align-items-center">
-                    <span>Recent Applications</span>
-                    
-                    <form method="GET" action="{% url 'hr_dashboard' %}" class="d-flex m-0" style="max-width: 180px;">
-                        <input type="text" name="q" class="form-control form-control-sm me-1" placeholder="Keyword..." value="{{ search_query }}">
-                        <button type="submit" class="btn btn-sm btn-secondary fw-bold">Find</button>
+            <div class="panel" id="applications">
+                <div class="panel-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="panel-title">Applicant Management</h2>
+                        <p class="panel-subtitle">View, manage, and assign statuses to all candidates.</p>
+                    </div>
+                    <form method="GET" action="{% url 'hr_dashboard' %}" class="d-flex gap-2 m-0">
+                        <input type="text" name="q" class="dark-input" placeholder="Search candidates..." value="{{ search_query }}">
+                        <button type="submit" class="btn-cyan">Filter</button>
                     </form>
                 </div>
                 
-                <div class="card-body-custom p-0">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="ps-4 py-3">Candidate</th>
-                                <th class="py-3">AI Score</th>
-                                <th class="py-3">Status</th>
-                                <th class="py-3 pe-4 text-end">Resume</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for app in recent_applications %}
-                            <tr>
-                                <td class="ps-4 py-3 fw-semibold">
-                                    <a href="{% url 'hr_application_detail' app.id %}" class="text-decoration-none text-primary">
-                                        {{ app.candidate.username|title }}
-                                    </a>
-                                </td>
-                                <td class="py-3">
-                                    {% if app.ai_match_score >= 50 %}
-                                        <span class="text-success fw-bold">{{ app.ai_match_score }}%</span>
-                                    {% else %}
-                                        <span class="text-danger fw-bold">{{ app.ai_match_score|default:"N/A" }}%</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-3">
-                                    {% if app.status == 'Shortlisted' %}
-                                        <span class="badge bg-success text-white">Shortlisted</span>
-                                    {% else %}
-                                        <span class="badge bg-danger text-white">Rejected</span>
-                                    {% endif %}
-                                </td>
-                                <td class="py-3 pe-4 text-end">
-                                    {% if app.resume %}
-                                        <a href="{{ app.resume.url }}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold">View PDF</a>
-                                    {% else %}
-                                        <span class="text-muted small">No File</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center text-muted py-5">No applications found.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <table class="table-dark-theme">
+                    <thead>
+                        <tr>
+                            <th>Candidate Name</th>
+                            <th>Applied Role</th>
+                            <th>AI Match</th>
+                            <th>Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in recent_applications %}
+                        <tr>
+                            <td class="fw-semibold">
+                                <a href="{% url 'hr_application_detail' app.id %}">{{ app.candidate.username|title }}</a>
+                            </td>
+                            <td style="color: var(--text-muted);">{{ app.job.title }}</td>
+                            <td>
+                                {% if app.ai_match_score >= 50 %}
+                                    <span style="color: #10b981; font-weight: bold;">{{ app.ai_match_score }}%</span>
+                                {% else %}
+                                    <span style="color: var(--accent-red); font-weight: bold;">{{ app.ai_match_score|default:"N/A" }}%</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if app.status == 'Shortlisted' or app.status == 'HR Interviewing' %}
+                                    <span class="status-dot dot-active"></span> {{ app.status }}
+                                {% elif 'Reject' in app.status %}
+                                    <span class="status-dot dot-danger"></span> {{ app.status }}
+                                {% else %}
+                                    <span class="status-dot dot-inactive"></span> {{ app.status }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if app.resume %}
+                                    <a href="{{ app.resume.url }}" target="_blank" class="btn-outline-dark text-decoration-none">View PDF</a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4" style="color: var(--text-muted);">No applications found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel" id="jobs">
+                <div class="panel-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h2 class="panel-title">Active Job Postings</h2>
+                        <p class="panel-subtitle">Manage currently open roles.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="GET" action="{% url 'hr_dashboard' %}" class="d-flex gap-2 m-0">
+                            <input type="text" name="job_q" class="dark-input" placeholder="Search roles..." value="{{ job_search_query }}">
+                            <button type="submit" class="btn-cyan">Filter</button>
+                        </form>
+                        <a href="{% url 'add_job_posting' %}" class="btn-outline-dark text-decoration-none">+ Add</a>
+                    </div>
                 </div>
+                
+                <table class="table-dark-theme">
+                    <thead>
+                        <tr>
+                            <th>Position Title</th>
+                            <th>Posted Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in recent_jobs %}
+                        <tr>
+                            <td class="fw-semibold">{{ job.title }}</td>
+                            <td style="color: var(--text-muted);">{{ job.posting_date|date:"d M Y" }}</td>
+                            <td>
+                                {% if job.is_active %}
+                                    <span class="status-dot dot-active"></span> Active
+                                {% else %}
+                                    <span class="status-dot dot-inactive"></span> Closed
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-4" style="color: var(--text-muted);">No active jobs found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
 
         </div>
-    </div>
+    </main>
 
 </body>
 </html>

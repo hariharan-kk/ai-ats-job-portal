@@ -1,17 +1,76 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from .models import JobPosting, Application
-from .forms import ApplicationForm
-from .utils import extract_text_from_pdf, evaluate_resume_with_local_model, generate_custom_questions
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth import login
-from .forms import CandidateRegistrationForm
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from .models import Question, CandidateTest
 from django.urls import reverse
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Q
+
+import requests
+import os
+import re
+
+from .models import JobPosting, Application, Question, CandidateTest
+from .forms import ApplicationForm, CandidateRegistrationForm
+from .utils import extract_text_from_pdf, evaluate_resume_with_local_model, generate_custom_questions
+
+# ==========================================
+# --- THE AI ROUTER (ADAPTER PATTERN) ---
+# ==========================================
+# Change to True if mentor wants Ollama again
+USE_OLLAMA = False 
+
+def evaluate_with_huggingface(resume_text, core_requirements):
+    API_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+    hf_token = os.environ.get("HF_TOKEN", "YOUR_HUGGINGFACE_ACCESS_TOKEN_HERE")
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    
+    prompt = f"<s>[INST] You are an expert HR assistant. Evaluate this resume against these requirements: {core_requirements}. Resume: {resume_text} Provide a match score (0-100) on the first line as just a number, followed by a brief justification. [/INST]"
+    
+    payload = {
+        "inputs": prompt,
+        "parameters": {"max_new_tokens": 250, "temperature": 0.3, "return_full_text": False}
+    }
+    
+    try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+        
+        if isinstance(result, list) and len(result) > 0:
+            ai_output = result[0].get('generated_text', '').strip()
+            
+            # Default fallback values
+            score = 0
+            justification = ai_output
+            
+            # Safely extract the first number from the AI's response to use as the score
+            match = re.search(r'\b(\d{1,3})\b', ai_output)
+            if match:
+                score = int(match.group(1))
+                # Remove the raw number from the beginning of the justification text
+                justification = ai_output.replace(match.group(1), '', 1).strip()
+                
+            return score, justification
+            
+        return 0, "Evaluation failed to generate."
+    except Exception as e:
+        print(f"Hugging Face API Error: {e}")
+        return 0, "Error connecting to AI evaluation server."
+
+def process_resume_evaluation(resume_text, core_requirements):
+    """Routes the AI evaluation to either local Ollama or cloud Hugging Face"""
+    if USE_OLLAMA:
+        print("Routing to local Ollama from utils...")
+        return evaluate_resume_with_local_model(resume_text, core_requirements)
+    else:
+        print("Routing to Hugging Face Cloud API...")
+        return evaluate_with_huggingface(resume_text, core_requirements)
+
+# ==========================================
+# --- DJANGO VIEWS ---
+# ==========================================
 
 def job_list(request):
     jobs = JobPosting.objects.filter(is_active=True).order_by('-posting_date')
@@ -29,37 +88,30 @@ def apply_for_job(request, job_id):
             application.candidate = request.user
             
             # --- PHASE C: AI EVALUATION TRIGGER ---
-            # 1. Extract text
             extracted_text = extract_text_from_pdf(request.FILES['resume'])
             application.extracted_text = extracted_text
             
-            # 2. Send to Gemini/Qwen if text was successfully extracted
             if extracted_text:
-                score, justification = evaluate_resume_with_local_model(extracted_text, job.core_requirements)
+                # WE CHANGED THIS LINE: Now it calls our Router instead of hardcoding Ollama!
+                score, justification = process_resume_evaluation(extracted_text, job.core_requirements)
+                
                 application.ai_match_score = score
                 application.ai_justification = justification
                 
-                # 3. Auto-update status based on the Gatekeeper
                 if score >= 50:
                     application.status = 'Shortlisted'
                 else:
                     application.status = 'Rejected'
             
-            # Save the final application with all AI data attached
             application.save()
             
-            # --- PHASE D: DYNAMIC EXAM GENERATION (Only if Shortlisted!) ---
+            # --- PHASE D: DYNAMIC EXAM GENERATION ---
             if application.status == 'Shortlisted':
-                # 1. Create the blank test record in the database
                 test_instance = CandidateTest.objects.create(application=application)
-                
-                # 2. Ask Qwen to generate custom JSON questions based on the resume
                 custom_questions = generate_custom_questions(extracted_text)
                 
                 if custom_questions:
-                    # --- AI SAFETY NET ---
                     if isinstance(custom_questions, dict):
-                        # Scenario A: Qwen wrapped the list in a parent dictionary (e.g., {"questions": [...]})
                         found_list = False
                         for key, value in custom_questions.items():
                             if isinstance(value, list):
@@ -68,17 +120,13 @@ def apply_for_job(request, job_id):
                                 break
                         
                         if not found_list:
-                            # Scenario C: Qwen structured it as nested objects (e.g., {"question1": {...}, "question2": {...}})
                             first_val = next(iter(custom_questions.values()), None)
                             if isinstance(first_val, dict) and ('text' in first_val or 'question' in first_val):
                                 custom_questions = list(custom_questions.values())
                             else:
-                                # Scenario B: Qwen just gave us ONE single question dictionary! Wrap it in a list.
                                 custom_questions = [custom_questions]
                     
-                    # 2. Only proceed if we definitely have a list now
                     if isinstance(custom_questions, list):
-                        # 3. Loop through the AI's JSON array and save them to the database
                         for q in custom_questions:
                             if isinstance(q, dict):
                                 Question.objects.create(
@@ -91,66 +139,34 @@ def apply_for_job(request, job_id):
                                     correct_answer=q.get('correct_answer', 'A')
                                 )
 
-                # 4. Build the absolute URL for the test
                 test_url = request.build_absolute_uri(
                     reverse('take_aptitude_test', args=[test_instance.secure_id])
                 )
                 
-                # 5. Email the candidate their custom secure link
                 subject = f"Required: Technical Aptitude Test for {job.title}"
-                message = f"""
-Hi {request.user.username},
-
-Congratulations! Your resume has passed our initial AI screening. 
-We have dynamically generated a technical aptitude test based on the specific skills listed in your resume. 
-
-Click your secure, one-time link below to begin:
-{test_url}
-
-Best of luck,
-The HR Team
-"""
+                message = f"Hi {request.user.username},\n\nCongratulations! Your resume has passed our initial AI screening.\nWe have dynamically generated a technical aptitude test based on the specific skills listed in your resume.\n\nClick your secure, one-time link below to begin:\n{test_url}\n\nBest of luck,\nThe HR Team"
+                
                 try:
                     send_mail(
-                        subject,
-                        message,
-                        settings.EMAIL_HOST_USER,
-                        [request.user.email],
-                        fail_silently=False,
+                        subject, message, settings.EMAIL_HOST_USER, [request.user.email], fail_silently=False,
                     )
                 except Exception as e:
                     print(f"Failed to send aptitude test email: {e}")
 
-            
-            # --- EMAIL NOTIFICATION LOGIC (For everyone) ---
+            # --- EMAIL NOTIFICATION LOGIC ---
             status_text = "Shortlisted! 🎉 Please check your email for a technical assessment." if application.status == 'Shortlisted' else "Not Selected at this time."
             final_score = application.ai_match_score if application.ai_match_score else 0.0
             
             subject = f'Application Received: {job.title}'
-            message = f"""
-Hello {request.user.username},
-
-Thank you for applying for the {job.title} position!
+            message = f"Hello {request.user.username},\n\nThank you for applying for the {job.title} position!\n\nOur AI system has successfully reviewed your resume and calculated a match score of {final_score}%.\n\nBased on this score, your application is {status_text}\n\nBest regards,\nThe AI Job Portal Team"
             
-Our AI system has successfully reviewed your resume and calculated a match score of {final_score}%.
-            
-Based on this score, your application is {status_text}
-            
-Best regards,
-The AI Job Portal Team
-"""
             try:
                 send_mail(
-                    subject=subject,
-                    message=message,
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[request.user.email], 
-                    fail_silently=False, 
+                    subject=subject, message=message, from_email=settings.EMAIL_HOST_USER, recipient_list=[request.user.email], fail_silently=False, 
                 )
             except Exception as e:
                 print(f"Failed to send status email: {e}")
             
-            # Redirect to dashboard
             return redirect('dashboard')
     else:
         form = ApplicationForm()
@@ -181,14 +197,11 @@ def job_detail(request, job_id):
     return render(request, 'core/job_detail.html', {'job': job})
 
 def take_aptitude_test(request, secure_id):
-    """Displays the test to the candidate and auto-grades it upon submission."""
     test_instance = get_object_or_404(CandidateTest, secure_id=secure_id)
     
-    # SECURITY: If they already took it, block them from taking it again
     if test_instance.is_completed:
         return render(request, 'core/test_already_completed.html')
         
-    # --- DYNAMIC QUESTIONS FETCH ---
     questions = Question.objects.filter(test=test_instance)
     
     if request.method == 'POST':
@@ -211,31 +224,22 @@ def take_aptitude_test(request, secure_id):
         
     return render(request, 'core/take_test.html', {'questions': questions, 'test_instance': test_instance})
 
-# 1. THE SECURITY GUARD
-# This function returns True if the user is a superuser OR if they belong to the 'HR' group
 def is_hr_or_superuser(user):
     return user.is_superuser or getattr(user, 'is_hr', False) or user.groups.filter(name='HR').exists()
 
-# 2. THE DASHBOARD VIEW
 @login_required(login_url='/login/') 
 @user_passes_test(is_hr_or_superuser, login_url='/login/')
 def custom_hr_dashboard(request):
-    # We grab the text from both search bars independently
     app_search_query = request.GET.get('q', '') 
     job_search_query = request.GET.get('job_q', '') 
     
-    # --- JOB SEARCH LOGIC ---
     if job_search_query:
-        # Search jobs by title or the core requirements
         recent_jobs = JobPosting.objects.filter(
-            Q(title__icontains=job_search_query) | 
-            Q(core_requirements__icontains=job_search_query)
+            Q(title__icontains=job_search_query) | Q(core_requirements__icontains=job_search_query)
         ).order_by('-posting_date')
     else:
-        # Default: just show the 5 most recent
         recent_jobs = JobPosting.objects.all().order_by('-posting_date')[:5]
 
-    # --- APPLICATION SEARCH LOGIC ---
     if app_search_query:
         recent_applications = Application.objects.filter(
             Q(candidate__username__icontains=app_search_query) |
@@ -243,7 +247,6 @@ def custom_hr_dashboard(request):
             Q(extracted_text__icontains=app_search_query)
         ).order_by('-applied_at')
     else:
-        # Default: just show the 10 most recent
         recent_applications = Application.objects.all().order_by('-applied_at')[:10]
     
     context = {
@@ -252,18 +255,13 @@ def custom_hr_dashboard(request):
         'search_query': app_search_query,
         'job_search_query': job_search_query,
     }
-    
     return render(request, 'core/hr_dashboard.html', context)
 
-
-# 3. THE CANDIDATE MANAGEMENT VIEW
 @login_required(login_url='/login/')
 @user_passes_test(is_hr_or_superuser, login_url='/login/')
 def hr_application_detail(request, app_id):
-    # Get the specific application
     application = get_object_or_404(Application, id=app_id)
     
-    # If HR submits the form to update status/interview details
     if request.method == 'POST':
         new_status = request.POST.get('status')
         interview_time = request.POST.get('interview_time')
@@ -276,11 +274,9 @@ def hr_application_detail(request, app_id):
         if interview_venue:
             application.interview_venue = interview_venue
             
-        application.save() # This triggers your automated email if status is 'HR Interviewing'!
-        
-        return redirect('hr_dashboard') # Send them back to the main dashboard
+        application.save() 
+        return redirect('hr_dashboard') 
 
-    # Get the test associated with this application (if it exists)
     try:
         candidate_test = CandidateTest.objects.get(application=application)
     except CandidateTest.DoesNotExist:
@@ -289,7 +285,24 @@ def hr_application_detail(request, app_id):
     context = {
         'app': application,
         'test': candidate_test,
-        # Pass all available status choices from your models.py
         'status_choices': Application.STATUS_CHOICES, 
     }
     return render(request, 'core/hr_application_detail.html', context)
+
+@login_required(login_url='/login/')
+@user_passes_test(is_hr_or_superuser, login_url='/login/')
+def add_job_posting(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+        core_requirements = request.POST.get('core_requirements')
+        
+        JobPosting.objects.create(
+            title=title,
+            description=description,
+            core_requirements=core_requirements,
+            is_active=True 
+        )
+        return redirect('hr_dashboard')
+        
+    return render(request, 'core/add_job.html')

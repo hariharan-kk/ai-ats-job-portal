@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+load_dotenv() # This loads the variables from .env
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -135,10 +138,10 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
 # Replace with the email address you used to generate the App Password
-EMAIL_HOST_USER = 'YOUR EMAIL ADDRESS'
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 
 # Replace with the 16-character password from Step 1 (NO SPACES)
-EMAIL_HOST_PASSWORD = 'EMAIL PASSWORD'
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASS')
 
 # --- AUTHENTICATION REDIRECTS ---
 LOGIN_REDIRECT_URL = 'job_list'   # Where to go after a successful login
